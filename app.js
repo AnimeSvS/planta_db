@@ -49,8 +49,8 @@ async function renderTabla(dataArray, tbodyId) {
         <td>${d.cantidadJabas}</td><td>${PESO_JABA.toFixed(2)} KG</td><td>${totalJ.toFixed(2)} KG</td>
         <td>${d.pollosPorJaba}</td><td>${cPollos}</td><td>${d.pesoBruto.toFixed(2)} KG</td>
         <td>${neto.toFixed(2)} KG</td><td>${prom.toFixed(3)} KG</td>
-        ${tbodyId === 'tablaRegistros' ? 
-          `<td><button class="btn btn-warning btn-sm btnEditar" data-id="${d.id}">✏️</button></td>
+        ${tbodyId === 'tablaRegistros' ?
+        `<td><button class="btn btn-warning btn-sm btnEditar" data-id="${d.id}">✏️</button></td>
            <td><button class="btn btn-danger btn-sm btnEliminar" data-id="${d.id}">🗑️</button></td>` : ''}
       </tr>`;
   });
@@ -75,9 +75,9 @@ async function cargarDatosPorDia(fecha, coleccion, tbodyId) {
 
   const dataArray = snapshot.docs.map(doc => doc.data());
 
-  if (dataArray.length === 0) {
-    alert(`No se encontraron datos en la fecha ${fecha.toLocaleDateString()}`);
-  }
+  // if (dataArray.length === 0) {
+  // alert(`No se encontraron datos en la fecha ${fecha.toLocaleDateString()}`);
+  // }
 
   await renderTabla(dataArray, tbodyId);
 }
@@ -136,13 +136,8 @@ function exportarTabla(idWrapper, nombreArchivo) {
   XLSX.writeFile(wb, nombreArchivo);
 }
 
-// Imprimir
-function imprimirTabla(idWrapper) {
-  const html = document.getElementById(idWrapper).outerHTML;
-  const w = window.open('', 'Imprimir', 'width=800');
-  w.document.write(`<html><head><title>Imprimir</title></head><body>${html}</body></html>`);
-  w.document.close(); w.print(); w.close();
-}
+
+
 
 // Formato fecha para guardar Timestamp actual
 function ahoraTimestamp() {
@@ -150,7 +145,7 @@ function ahoraTimestamp() {
 }
 
 // Listeners registro y edición
-document.getElementById('formRegistro').addEventListener('submit', async function(e) {
+document.getElementById('formRegistro').addEventListener('submit', async function (e) {
   e.preventDefault();
   if (!this.checkValidity()) {
     this.classList.add('was-validated');
@@ -179,7 +174,7 @@ document.getElementById('formRegistro').addEventListener('submit', async functio
   });
 });
 
-document.getElementById('formEdit').addEventListener('submit', async function(e) {
+document.getElementById('formEdit').addEventListener('submit', async function (e) {
   e.preventDefault();
   if (!this.checkValidity()) {
     this.classList.add('was-validated');
@@ -217,24 +212,6 @@ document.getElementById('btnLimpiarBusqueda').addEventListener('click', () => {
   cargarDatosInicial();
 });
 
-// Botones limpieza, exportar e imprimir (resto sin modificar)
-document.getElementById('btnExportarExcel').addEventListener('click', () => exportarTabla('tablaRegistrosWrapper', 'registros.xlsx'));
-document.getElementById('btnImprimirRegistros').addEventListener('click', () => {
-  const html = document.getElementById('tablaRegistros').outerHTML;
-  const w = window.open('', 'Imprimir Registros', 'width=800,height=600');
-  w.document.write(`
-    <html><head><title>Imprimir Registros</title>
-    <style>table {width: 100%; border-collapse: collapse;} th, td {border: 1px solid #333; padding: 8px; text-align: center;}</style>
-    </head><body><h3>Registros Ingresados</h3>${html}</body></html>`);
-  w.document.close(); w.focus(); w.print(); w.close();
-});
-document.getElementById('btnLimpiarBusquedaEliminados').addEventListener('click', () => {
-  document.getElementById('buscarFechaEliminados').value = '';
-  cargarDatosInicial();
-});
-document.getElementById('btnExportarExcelEliminados').addEventListener('click', () => exportarTabla('tablaEliminadosWrapper', 'eliminados.xlsx'));
-document.getElementById('btnImprimirEliminados').addEventListener('click', () => imprimirTabla('tablaEliminadosWrapper'));
-
 /// Confirmación modal
 function mostrarConfirmacionPesoBruto(pesoBruto, onConfirm) {
   const modalHtml = `
@@ -256,8 +233,77 @@ function mostrarConfirmacionPesoBruto(pesoBruto, onConfirm) {
   modalEl.addEventListener('hidden.bs.modal', () => modalEl.remove());
 }
 
-// Carga inicial al abrir la página
-document.addEventListener('DOMContentLoaded', () => {
-  cargarDatosInicial();
-});
+//imprimir
+function imprimirResumen(tbodyId) {
+  const tabla = document.getElementById(tbodyId);
+  if (!tabla) {
+    alert('Tabla no encontrada para imprimir.');
+    return;
+  }
 
+  const meses = [
+    "enero", "febrero", "marzo", "abril", "mayo", "junio",
+    "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+  ];
+  const hoy = new Date();
+  const fechaStr = `${String(hoy.getDate()).padStart(2,'0')}/${meses[hoy.getMonth()]}/${hoy.getFullYear()}`;
+
+  const filas = tabla.querySelectorAll('tr');
+  let contenido = '';
+  filas.forEach(fila => {
+    const celdas = fila.querySelectorAll('td');
+    if (celdas.length > 8) {
+      const id = celdas[0].textContent.trim();
+      const pesoBruto = celdas[8].textContent.trim();
+      contenido += `${id}\t${pesoBruto}\n`;
+    }
+  });
+
+  const textoImprimir = `
+---------------------------------------
+FECHA\t : \t${fechaStr}
+---------------------------------------
+ID\tP. BRUTO (KG)
+---------------------------------------
+${contenido}---------------------------------------
+ENCARGADA:\tSr. Juana C.C
+---------------------------------------
+  `;
+
+  const ventanaImpresion = window.open('', '', 'width=600,height=400');
+  ventanaImpresion.document.write(`
+    <html>
+      <head>
+        <title>Imprimir Resumen</title>
+        <style>
+          body {
+            font-family: monospace;
+            white-space: pre;
+            padding: 20px;
+            font-size: 14px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+          }
+          pre {
+            text-align: center;
+          }
+        </style>
+      </head>
+      <body>
+        <pre>${textoImprimir}</pre>
+      </body>
+    </html>
+  `);
+  ventanaImpresion.document.close();
+  ventanaImpresion.focus();
+  ventanaImpresion.print();
+  ventanaImpresion.close();
+}
+
+
+document.getElementById('btnImprimir').addEventListener('click', () => {
+  imprimirResumen('tablaRegistros');
+});
