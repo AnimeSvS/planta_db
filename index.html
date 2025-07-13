@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AVICRUZ SAC - PLANTA</title>
+  <title>AVICRUZ SAC 🐓</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="styles.css" rel="stylesheet" />
 </head>
@@ -74,8 +74,13 @@
             <div>
               <button class="btn btn-primary mt-3" id="btnBuscarFecha">Buscar</button>
               <button class="btn btn-secondary mt-3 ms-2" id="btnLimpiarBusqueda">🧹 Limpiar</button>
-             <button id="btnImprimir" class="btn btn-secondary mt-3 ms-3"style="background-color: rebeccapurple; color: white;">🖨️ Imprimir Tabla</button>
- 
+              <button id="btnImprimir" class="btn btn-secondary mt-3 ms-3"
+                style="background-color: rebeccapurple; color: white;">🖨️ Imprimir Tabla</button>
+              <button id="btnExportarExcel" class="btn btn-secondary mt-3 ms-3"
+                style="background-color: rgb(63, 153, 51); color: white;">Exportar a XLS</button>
+
+
+
             </div>
           </div>
           <div class="table-responsive">
@@ -99,6 +104,18 @@
               </thead>
               <tbody id="tablaRegistros"></tbody>
             </table>
+            <nav aria-label="Paginación de registros" class="my-3 d-flex justify-content-center">
+              <ul class="pagination pagination-sm mb-0">
+                <li class="page-item " id="liPaginaAnterior">
+                  <button class="page-link" id="btnPaginaAnterior" tabindex="-1" aria-disabled="true">⬅️
+                    Anterior</button>
+                </li>
+                <li class="page-item " id="liPaginaSiguiente">
+                  <button class="page-link" id="btnPaginaSiguiente">Siguiente ➡️</button>
+                </li>
+              </ul>
+            </nav>
+
           </div>
         </div>
       </div>
@@ -112,7 +129,7 @@
               <thead>
                 <tr>
                   <th>ID</th>
-                  <th>Fecha Registro</th>
+                 <th>Fecha Eliminación</th>
                   <th>Producto</th>
                   <th>Jabas</th>
                   <th>Kg/Jaba</th>
@@ -122,7 +139,7 @@
                   <th>Bruto</th>
                   <th>Neto</th>
                   <th>Promedio</th>
-                  <th>Fecha Eliminación</th>
+            
                 </tr>
               </thead>
               <tbody id="tablaEliminados"></tbody>
@@ -194,13 +211,24 @@
   </div>
 
 
+  <!-- FOOTER -->
 
+  <footer style="text-align: center; padding: 15px; font-size: 14px; color: #666;">
+    © <span id="añoActual"></span> <strong>SedyGames</strong>. Todos los derechos reservados.
+    · <a href="terminos.html">Términos de Uso</a>
+  </footer>
+
+  <script>
+    // Actualiza el año automáticamente
+    document.getElementById("añoActual").textContent = new Date().getFullYear();
+  </script>
   <!-- SCRIPTS -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js"></script>
   <script src="app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 
 </html>
