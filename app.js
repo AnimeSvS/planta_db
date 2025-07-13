@@ -3,6 +3,7 @@ let currentEditId = null;
 const registrosRef = db.collection('registros');
 const eliminadosRef = db.collection('eliminados');
 
+
 // Utilitarios
 function formatearFecha(timestamp) {
   if (!timestamp) return '';
@@ -42,15 +43,26 @@ async function renderTabla(dataArray, tbodyId) {
   tbody.innerHTML = '';
   dataArray.forEach(d => {
     const { totalJ, cPollos, neto, prom } = calcular(d.cantidadJabas, d.pollosPorJaba, d.pesoBruto);
-    const fechaFormateada = formatearFecha(d.fecha);
+
+    const fechaFormateada = tbodyId === 'tablaEliminados' && d.fechaEliminacion
+      ? formatearFecha(d.fechaEliminacion)
+      : formatearFecha(d.fecha);
+
     tbody.innerHTML += `
       <tr>
-        <td>${d.id}</td><td>${fechaFormateada}</td><td>${d.producto}</td>
-        <td>${d.cantidadJabas}</td><td>${PESO_JABA.toFixed(2)} KG</td><td>${totalJ.toFixed(2)} KG</td>
-        <td>${d.pollosPorJaba}</td><td>${cPollos}</td><td>${d.pesoBruto.toFixed(2)} KG</td>
-        <td>${neto.toFixed(2)} KG</td><td>${prom.toFixed(3)} KG</td>
+        <td>${d.id}</td>
+        <td>${fechaFormateada}</td>
+        <td>${d.producto}</td>
+        <td>${d.cantidadJabas}</td>
+        <td>${PESO_JABA.toFixed(2)} KG</td>
+        <td>${totalJ.toFixed(2)} KG</td>
+        <td>${d.pollosPorJaba}</td>
+        <td>${cPollos}</td>
+        <td>${d.pesoBruto.toFixed(2)} KG</td>
+        <td>${neto.toFixed(2)} KG</td>
+        <td>${prom.toFixed(3)} KG</td>
         ${tbodyId === 'tablaRegistros' ?
-        `<td><button class="btn btn-warning btn-sm btnEditar" data-id="${d.id}">✏️</button></td>
+          `<td><button class="btn btn-warning btn-sm btnEditar" data-id="${d.id}">✏️</button></td>
            <td><button class="btn btn-danger btn-sm btnEliminar" data-id="${d.id}">🗑️</button></td>` : ''}
       </tr>`;
   });
@@ -68,19 +80,25 @@ async function cargarDatosPorDia(fecha, coleccion, tbodyId) {
   const inicioDia = getInicioDelDia(fecha);
   const finDia = getFinDelDia(fecha);
 
-  const snapshot = await collectionRef
-    .where('fecha', '>=', firebase.firestore.Timestamp.fromDate(inicioDia))
-    .where('fecha', '<', firebase.firestore.Timestamp.fromDate(finDia))
-    .get();
+  let query = collectionRef;
 
+  if (coleccion === 'registros') {
+    query = query
+      .where('fecha', '>=', firebase.firestore.Timestamp.fromDate(inicioDia))
+      .where('fecha', '<', firebase.firestore.Timestamp.fromDate(finDia));
+  } else {
+    // para eliminados usar fechaEliminacion
+    query = query
+      .where('fechaEliminacion', '>=', firebase.firestore.Timestamp.fromDate(inicioDia))
+      .where('fechaEliminacion', '<', firebase.firestore.Timestamp.fromDate(finDia));
+  }
+
+  const snapshot = await query.get();
   const dataArray = snapshot.docs.map(doc => doc.data());
-
-  // if (dataArray.length === 0) {
-  // alert(`No se encontraron datos en la fecha ${fecha.toLocaleDateString()}`);
-  // }
 
   await renderTabla(dataArray, tbodyId);
 }
+
 
 // Convierte valor de input type=date ("yyyy-mm-dd") a Date objeto inicio día
 function fechaInputADate(fechaInput) {
@@ -91,11 +109,11 @@ function fechaInputADate(fechaInput) {
 }
 
 // Carga inicial solo muestra datos del día actual
-async function cargarDatosInicial() {
-  const hoy = new Date();
-  await cargarDatosPorDia(hoy, 'registros', 'tablaRegistros');
-  await cargarDatosPorDia(hoy, 'eliminados', 'tablaEliminados');
-}
+//async function cargarDatosInicial() {
+  //const hoy = new Date();
+ // await cargarDatosPorDia(hoy, 'registros', 'tablaRegistros');
+//  await cargarDatosPorDia(hoy, 'eliminados', 'tablaEliminados');
+//}
 
 // Editar y eliminar
 async function abrirEditar(e) {
@@ -128,16 +146,6 @@ async function eliminarRegistro(e) {
   await registrosRef.doc(snap.docs[0].id).delete();
   cargarDatosInicial();
 }
-
-// Exportar a Excel
-function exportarTabla(idWrapper, nombreArchivo) {
-  const table = document.getElementById(idWrapper);
-  const wb = XLSX.utils.table_to_book(table, { sheet: "Sheet1" });
-  XLSX.writeFile(wb, nombreArchivo);
-}
-
-
-
 
 // Formato fecha para guardar Timestamp actual
 function ahoraTimestamp() {
@@ -195,17 +203,17 @@ document.getElementById('formEdit').addEventListener('submit', async function (e
   cargarDatosInicial();
 });
 
-// Botones Buscar y Limpiar filtro fecha
-document.getElementById('btnBuscarFecha').addEventListener('click', () => {
-  const fechaStr = document.getElementById('buscarFecha').value;
-  if (!fechaStr) {
-    alert('Seleccione una fecha para buscar');
-    return;
-  }
-  const fecha = fechaInputADate(fechaStr);
-  cargarDatosPorDia(fecha, 'registros', 'tablaRegistros');
-  cargarDatosPorDia(fecha, 'eliminados', 'tablaEliminados');
-});
+// Botones Buscar y Limpiar filtro fecha------
+//document.getElementById('btnBuscarFecha').addEventListener('click', () => {
+  //const fechaStr = document.getElementById('buscarFecha').value;
+  //if (!fechaStr) {
+   // alert('Seleccione una fecha para buscar');
+  //  return;
+ // }
+  //const fecha = fechaInputADate(fechaStr);
+  //cargarDatosPorDia(fecha, 'registros', 'tablaRegistros');
+  //cargarDatosPorDia(fecha, 'eliminados', 'tablaEliminados');
+//});
 
 document.getElementById('btnLimpiarBusqueda').addEventListener('click', () => {
   document.getElementById('buscarFecha').value = '';
@@ -214,6 +222,17 @@ document.getElementById('btnLimpiarBusqueda').addEventListener('click', () => {
 
 /// Confirmación modal
 function mostrarConfirmacionPesoBruto(pesoBruto, onConfirm) {
+  // Eliminar modal previo si existe para evitar duplicados
+  const modalExistente = document.getElementById('confirmModal');
+  if (modalExistente) {
+    // Por seguridad, cerrar el modal si está abierto y eliminarlo
+    const bsPrevio = bootstrap.Modal.getInstance(modalExistente);
+    if (bsPrevio) {
+      bsPrevio.hide();
+    }
+    modalExistente.remove();
+  }
+
   const modalHtml = `
   <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered"><div class="modal-content p-4">
@@ -225,13 +244,20 @@ function mostrarConfirmacionPesoBruto(pesoBruto, onConfirm) {
         <button class="btn btn-primary" id="btnConfirmAdd">Confirmar</button>
       </div>
     </div></div></div>`;
+
   document.body.insertAdjacentHTML('beforeend', modalHtml);
   const modalEl = document.getElementById('confirmModal');
   const bs = new bootstrap.Modal(modalEl);
   bs.show();
-  modalEl.querySelector('#btnConfirmAdd').addEventListener('click', () => { onConfirm(); bs.hide(); });
+
+  modalEl.querySelector('#btnConfirmAdd').addEventListener('click', () => { 
+    onConfirm(); 
+    bs.hide(); 
+  });
+
   modalEl.addEventListener('hidden.bs.modal', () => modalEl.remove());
 }
+
 
 //imprimir
 function imprimirResumen(tbodyId) {
@@ -323,12 +349,200 @@ ENCARGADA:\tSr. Juana C.C
   `);
   ventanaImpresion.document.close();
 }
-
-
 document.getElementById('btnImprimir').addEventListener('click', () => {
   imprimirResumen('tablaRegistros');
 });
 
-// Carga inicial al abrir la página
+
+//EXPORTAR A EXCEL
+
+async function exportarDatosDiaAXLS() {
+  // Obtener la fecha del filtro, o hoy si no hay
+  const fechaStr = document.getElementById('buscarFecha').value;
+  const fecha = fechaInputADate(fechaStr) || new Date();
+
+  const inicioDia = getInicioDelDia(fecha);
+  const finDia = getFinDelDia(fecha);
+
+  // Traer todos los registros para la fecha, sin paginación
+  const snapshot = await registrosRef
+    .where('fecha', '>=', firebase.firestore.Timestamp.fromDate(inicioDia))
+    .where('fecha', '<', firebase.firestore.Timestamp.fromDate(finDia))
+    .orderBy('fecha')
+    .get();
+
+  const dataArray = snapshot.docs.map(doc => doc.data());
+  if (dataArray.length === 0) {
+    alert('No hay datos para exportar en la fecha seleccionada.');
+    return;
+  }
+
+  // Construir tabla para exportar (similar a exportarDatosTablaAXLS)
+  const columnas = [
+    'ID', 'Fecha', 'Producto', 'Cantidad Jabas', 'Peso Jaba',
+    'Total Jaba (KG)', 'Pollos por Jaba', 'Cantidad Pollos',
+    'Peso Bruto (KG)', 'Peso Neto (KG)', 'Promedio (KG)'
+  ];
+
+  let tablaContenido = '<table border="1"><thead><tr>';
+  columnas.forEach(col => {
+    tablaContenido += `<th>${col}</th>`;
+  });
+  tablaContenido += '</tr></thead><tbody>';
+
+  dataArray.forEach(d => {
+    const { totalJ, cPollos, neto, prom } = calcular(d.cantidadJabas, d.pollosPorJaba, d.pesoBruto);
+    const fechaFormateada = formatearFecha(d.fecha);
+    tablaContenido += `
+      <tr>
+        <td>${d.id}</td><td>${fechaFormateada}</td><td>${d.producto}</td>
+        <td>${d.cantidadJabas}</td><td>${PESO_JABA.toFixed(2)} KG</td><td>${totalJ.toFixed(2)} KG</td>
+        <td>${d.pollosPorJaba}</td><td>${cPollos}</td><td>${d.pesoBruto.toFixed(2)} KG</td>
+        <td>${neto.toFixed(2)} KG</td><td>${prom.toFixed(3)} KG</td>
+      </tr>`;
+  });
+
+  tablaContenido += '</tbody></table>';
+
+  const dataType = 'application/vnd.ms-excel';
+  const archivo = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office"
+          xmlns:x="urn:schemas-microsoft-com:office:excel"
+          xmlns="http://www.w3.org/TR/REC-html40">
+    <head>
+      <!--[if gte mso 9]>
+      <xml>
+        <x:ExcelWorkbook>
+          <x:ExcelWorksheets>
+            <x:ExcelWorksheet>
+              <x:Name>Datos</x:Name>
+              <x:WorksheetOptions>
+                <x:DisplayGridlines/>
+              </x:WorksheetOptions>
+            </x:ExcelWorksheet>
+          </x:ExcelWorksheets>
+        </x:ExcelWorkbook>
+      </xml>
+      <![endif]-->
+      <meta charset="UTF-8">
+    </head>
+    <body>${tablaContenido}</body>
+    </html>`;
+
+  const blob = new Blob([archivo], { type: dataType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+
+  const hoy = new Date();
+  const dia = String(hoy.getDate()).padStart(2, '0');
+  const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+  const anio = hoy.getFullYear();
+  const fechaHoy = `${dia}-${mes}-${anio}`;
+
+  a.download = `PLEP1_${fechaHoy}_SG.xls`;
+
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+//BOTON QUE EXPORTA A EXCEL
+document.getElementById('btnExportarExcel').addEventListener('click', () => {
+  exportarDatosDiaAXLS();
+});
 
 
+const PAGE_SIZE = 10;
+let lastVisible = null;
+let firstVisible = null;
+let pageStack = []; // Guarda la primera doc de cada página para ir hacia atrás
+
+// Función para cargar página con paginación (solo para registros)
+async function cargarPaginaRegistros(fecha, direccion = 'primera') {
+  const inicioDia = getInicioDelDia(fecha);
+  const finDia = getFinDelDia(fecha);
+
+  let query = registrosRef
+    .where('fecha', '>=', firebase.firestore.Timestamp.fromDate(inicioDia))
+    .where('fecha', '<', firebase.firestore.Timestamp.fromDate(finDia))
+    .orderBy('fecha')
+    .limit(PAGE_SIZE);
+
+  if (direccion === 'siguiente' && lastVisible) {
+    query = query.startAfter(lastVisible);
+  } else if (direccion === 'anterior' && pageStack.length > 1) {
+    pageStack.pop(); // Quita página actual
+    const prevFirstVisible = pageStack[pageStack.length - 1];
+    query = registrosRef
+      .where('fecha', '>=', firebase.firestore.Timestamp.fromDate(inicioDia))
+      .where('fecha', '<', firebase.firestore.Timestamp.fromDate(finDia))
+      .orderBy('fecha')
+      .startAt(prevFirstVisible)
+      .limit(PAGE_SIZE);
+  } else if (direccion === 'primera') {
+    pageStack = [];
+  }
+
+  const snapshot = await query.get();
+
+  if (!snapshot.empty) {
+    firstVisible = snapshot.docs[0];
+    lastVisible = snapshot.docs[snapshot.docs.length - 1];
+    if (direccion === 'siguiente' || direccion === 'primera') {
+      pageStack.push(firstVisible);
+    }
+  } else {
+    // No hay más datos
+    if (direccion === 'siguiente') {
+      alert('No hay más registros.');
+    }
+  }
+
+  const dataArray = snapshot.docs.map(doc => doc.data());
+  await renderTabla(dataArray, 'tablaRegistros');
+
+  actualizarBotonesPaginacion(snapshot.size);
+}
+
+// Actualiza estado de botones anterior/siguiente
+function actualizarBotonesPaginacion(numItems) {
+  const btnPrev = document.getElementById('btnPaginaAnterior');
+  const btnNext = document.getElementById('btnPaginaSiguiente');
+
+  btnPrev.disabled = pageStack.length <= 1;
+  btnNext.disabled = numItems < PAGE_SIZE;
+}
+
+// Cambia la carga inicial para usar paginación
+async function cargarDatosInicial() {
+  const hoy = new Date();
+  await cargarPaginaRegistros(hoy, 'primera');
+  await cargarDatosPorDia(hoy, 'eliminados', 'tablaEliminados');
+}
+
+// Modifica listener botón buscar fecha para usar paginación
+document.getElementById('btnBuscarFecha').addEventListener('click', () => {
+  const fechaStr = document.getElementById('buscarFecha').value;
+  if (!fechaStr) {
+    alert('Seleccione una fecha para buscar');
+    return;
+  }
+  const fecha = fechaInputADate(fechaStr);
+  cargarPaginaRegistros(fecha, 'primera');
+  cargarDatosPorDia(fecha, 'eliminados', 'tablaEliminados');
+});
+
+// Listeners para botones paginación
+document.getElementById('btnPaginaAnterior').addEventListener('click', () => {
+  const fechaStr = document.getElementById('buscarFecha').value || '';
+  const fecha = fechaInputADate(fechaStr) || new Date();
+  cargarPaginaRegistros(fecha, 'anterior');
+});
+
+document.getElementById('btnPaginaSiguiente').addEventListener('click', () => {
+  const fechaStr = document.getElementById('buscarFecha').value || '';
+  const fecha = fechaInputADate(fechaStr) || new Date();
+  cargarPaginaRegistros(fecha, 'siguiente');
+});
