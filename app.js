@@ -241,12 +241,15 @@ function imprimirResumen(tbodyId) {
     return;
   }
 
+  // Detección de Opera Mini
+  const esOperaMini = navigator.userAgent.includes('Opera Mini');
+
   const meses = [
     "enero", "febrero", "marzo", "abril", "mayo", "junio",
     "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
   ];
   const hoy = new Date();
-  const fechaStr = `${String(hoy.getDate()).padStart(2,'0')}/${meses[hoy.getMonth()]}/${hoy.getFullYear()}`;
+  const fechaStr = `${String(hoy.getDate()).padStart(2, '0')}/${meses[hoy.getMonth()]}/${hoy.getFullYear()}`;
 
   const filas = tabla.querySelectorAll('tr');
   let contenido = '';
@@ -270,7 +273,20 @@ ENCARGADA:\tSr. Juana C.C
 ---------------------------------------
   `;
 
-  const ventanaImpresion = window.open('', '', 'width=600,height=400');
+  if (esOperaMini) {
+    // Si es Opera Mini, redirigir a una página imprimible
+    const resumenURL = `data:text/plain;charset=utf-8,${encodeURIComponent(textoImprimir)}`;
+    window.location.href = resumenURL;
+    return;
+  }
+
+  // Si NO es Opera Mini, usar impresión normal
+  const ventanaImpresion = window.open('', '_blank', 'width=600,height=600');
+  if (!ventanaImpresion) {
+    alert("No se pudo abrir la ventana de impresión. Puede estar bloqueada por el navegador.");
+    return;
+  }
+
   ventanaImpresion.document.write(`
     <html>
       <head>
@@ -294,16 +310,25 @@ ENCARGADA:\tSr. Juana C.C
       </head>
       <body>
         <pre>${textoImprimir}</pre>
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+              // No se cierra automáticamente para evitar bloqueos
+            }, 300);
+          }
+        </script>
       </body>
     </html>
   `);
   ventanaImpresion.document.close();
-  ventanaImpresion.focus();
-  ventanaImpresion.print();
-  ventanaImpresion.close();
 }
 
 
 document.getElementById('btnImprimir').addEventListener('click', () => {
   imprimirResumen('tablaRegistros');
 });
+
+// Carga inicial al abrir la página
+
+
