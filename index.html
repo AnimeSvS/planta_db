@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AVICRUZ SAC 🐓</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="assets/styles.css" rel="stylesheet" />
+
+  <!-- DASHBOARD -->
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Chart.js plugin para autocolor -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
+</head>
+
+<body>
+  <nav class="navbar navbar-expand-lg mb-4 px-4">
+    <a class="navbar-brand">INVENTARIO 🐓</a>
+  </nav>
+
+  <div class="container">
+    <ul class="nav nav-tabs mb-4" id="tabMenu">
+      <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab"
+          data-bs-target="#registros">Registros</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#salidas">Salidas</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
+          data-bs-target="#reporteTiendas">ReporteTiendas</button></li>
+      <!-- <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tiendas">Tiendas</button></li> -->
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
+          data-bs-target="#eliminados">Eliminados</button></li>
+
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#dashboard">Dashboard</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tiendas">
+          🏪 Tiendas
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+      <!-- TAB REGISTROS -->
+      <div class="tab-pane fade show active" id="registros">
+        <div class="card p-4 mb-5">
+          <h4 class="text-primary mb-4">REGISTRAR INGRESOS 🐔</h4>
+          <form id="formRegistro" class="row g-3 needs-validation" novalidate>
+            <div class="col-md-4">
+              <label class="form-label">CANTIDAD DE JABAS</label>
+              <select id="cantidadJabas" class="form-select" required>
+                <option disabled>Seleccione</option>
+                <option selected>6</option>
+                <option>1</option>
+                <option>2</option>
+                <option>3</option>
+                <option>4</option>
+                <option>5</option>
+              </select>
+              <div class="invalid-feedback">Por favor seleccione una cantidad.</div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">POLLOS X JABA</label>
+              <select id="pollosPorJaba" class="form-select" required>
+                <option disabled>Seleccione</option>
+                <option selected>7</option>
+                <option>6</option>
+                <option>8</option>
+                <option>9</option>
+              </select>
+
+            </div>
+            <div class="col-md-4">
+              <label for="inputPesoJaba" class="form-label">PESO X JABA (kg)</label>
+              <input type="number" id="inputPesoJaba" class="form-control" step="0.01" min="0.01" required />
+              <div class="invalid-feedback">Por favor ingrese un peso válido.</div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">PESO BRUTO (kg)</label>
+              <input type="number" id="pesoBruto" class="form-control" step="0.01" min="0.01" required />
+              <div class="invalid-feedback">Por favor ingrese un peso válido.</div>
+            </div>
+            <div class="col-12 text-end">
+              <button type="submit" class="btn btn-primary btn-lg">REGISTRAR</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card p-4">
+          <h5 class="text-secondary mb-3">Registros Ingresados</h5>
+          <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <div class="input-group" style="max-width:250px;">
+              <span class="input-group-text">📅</span>
+              <input type="date" id="buscarFecha" class="form-control" />
+            </div>
+            <div>
+              <button class="btn btn-primary mt-3" id="btnBuscarFecha">Buscar</button>
+              <button class="btn btn-secondary mt-3 ms-2" id="btnLimpiarBusqueda">🧹 Limpiar</button>
+              <!-- <button id="btnImprimir" class="btn btn-secondary mt-3 ms-3"
+                style="background-color: rebeccapurple; color: white;">🖨️ Imprimir Tabla</button> -->
+              <button id="btnExportarExcel" class="btn btn-secondary mt-3 ms-3"
+                style="background-color: rgb(63, 153, 51); color: white;">Exportar a XLS</button>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-bordered text-center align-middle">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Fecha y Hora</th>
+                  <th>Producto</th>
+                  <th>Jabas</th>
+                  <th>Kg/Jaba</th>
+                  <th>Total Jabas</th>
+                  <th>Pollos/Jaba</th>
+                  <th>Total Pollos</th>
+                  <th>Bruto</th>
+                  <th>Neto</th>
+                  <th>Promedio</th>
+                  <th>Editar</th>
+                  <th>Eliminar</th>
+                </tr>
+              </thead>
+              <tbody id="tablaRegistros"></tbody>
+            </table>
+            <nav aria-label="Paginación de registros" class="my-3 d-flex justify-content-center">
+              <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" id="liPaginaAnterior">
+                  <button class="page-link" id="btnPaginaAnterior" onclick="anteriorPagina()" tabindex="-1"
+                    aria-disabled="true">
+                    ⬅️ Anterior
+                  </button>
+                </li>
+                <li class="page-item" id="liPaginaSiguiente">
+                  <button class="page-link" id="btnPaginaSiguiente" onclick="siguientePagina()">Siguiente ➡️</button>
+                </li>
+              </ul>
+            </nav>
+
+
+          </div>
+        </div>
+      </div>
+      <!-- ---------------------salidas -->
+      <!-- TAB SALIDAS -->
+
+      <!-- TAB SALIDAS -->
+      <div class="tab-pane fade" id="salidas">
+        <div class="card p-4 mb-4">
+          <h4 class="text-danger mb-3">REGISTRAR SALIDA 🐔</h4>
+
+          <form id="formSalida" class="row g-3 needs-validation" novalidate>
+            <div class="col-md-3">
+              <label class="form-label">CANTIDAD DE TINAS</label>
+              <select id="salidaJabas" class="form-select" required>
+                <option disabled selected>Seleccione</option>
+                <option>1</option>
+                <option>2</option>
+                <option>3</option>
+                <option>4</option>
+                <option>5</option>
+                <option>6</option>
+              </select>
+              <div class="invalid-feedback">Por favor seleccione una cantidad.</div>
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label">POLLOS X TINA</label>
+              <select id="salidaPollosJaba" class="form-select" required>
+                <option disabled selected>Seleccione</option>
+                <option>2</option>
+                <option>4</option>
+                <option>5</option>
+                <option>6</option>
+                <option>7</option>
+                <option>8</option>
+                <option>9</option>
+                <option>10</option>
+              </select>
+              <div class="invalid-feedback">Por favor seleccione una cantidad.</div>
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label">PESO X TINA (kg)</label>
+              <input type="number" id="salidaPesoPorTina" class="form-control" step="0.01" min="0.01" required>
+              <div class="invalid-feedback">Por favor ingrese un peso válido.</div>
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label">PESO BRUTO (kg)</label>
+              <input type="number" id="salidaPesoBruto" class="form-control" step="0.01" min="0.01" required>
+              <div class="invalid-feedback">Por favor ingrese un peso válido.</div>
+            </div>
+
+            <!-- El resto del formulario permanece igual -->
+            <div class="col-md-3">
+              <label class="form-label">DESTINO / SEDE</label>
+              <select id="salidaDestino" class="form-select" required>
+                <option disabled selected>Seleccione</option>
+                <option>MARIANO MELGAR</option>
+                <option>PAUCARPATA</option>
+                <option>MIRAFLORES</option>
+                <option>SOCABAYA</option>
+                <option>CAYMA</option>
+                <option>ALTO SELVA ALEGRE</option>
+                <option>AVELINO (PRINCIPAL)</option>
+                <option>COLON</option>
+                <option value="OTRO">OTROS</option>
+              </select>
+            </div>
+
+            <div class="col-md-12 d-none" id="otroDestinoDiv">
+              <label class="form-label">OTRO DESTINO</label>
+              <input type="text" id="otroDestino" class="form-control">
+            </div>
+
+            <div class="col-12 text-end">
+              <button type="submit" class="btn btn-danger btn-lg">
+                REGISTRAR SALIDA
+              </button>
+              <!--! usar en emergencia -->
+              <!-- <button onclick="depurarBusquedaSalidas()" class="btn btn-info btn-sm mt-2">
+                🔧 Depurar Búsqueda
+              </button> -->
+            </div>
+          </form>
+        </div>
+
+        <div class="card p-4">
+          <h5>Historial de Salidas</h5>
+          <!-- En la sección SALIDAS, después de <h5>Historial de Salidas</h5> -->
+          <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <div class="input-group" style="max-width:250px;">
+              <span class="input-group-text">📅</span>
+              <input type="date" id="buscarFechaSalidas" class="form-control" />
+            </div>
+            <div>
+              <button class="btn btn-primary mt-3" id="btnBuscarFechaSalidas">Buscar</button>
+              <button class="btn btn-secondary mt-3 ms-2" id="btnLimpiarBusquedaSalidas">🧹 Limpiar</button>
+              <button id="btnExportarExcelSalidas" class="btn btn-secondary mt-3 ms-3"
+                style="background-color: rgb(63, 153, 51); color: white;">Exportar a XLS</button>
+            </div>
+          </div>
+
+
+          <table class="table table-bordered text-center align-middle">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Fecha y Hora</th>
+                <th>Producto</th>
+                <th>Tinas</th>
+                <th>Kg/Tina</th>
+                <th>Total Tinas</th>
+                <th>Pollos/Tina</th>
+                <th>Total Pollos</th>
+                <th>Bruto</th>
+                <th>Neto</th>
+                <th>Promedio</th>
+                <th>Editar</th>
+                <th>Eliminar</th>
+              </tr>
+            </thead>
+            <tbody id="tablaSalidas"></tbody>
+          </table>
+          <!-- NAVEGACIÓN DE PÁGINAS - Agregar después de la tabla -->
+          <nav aria-label="Paginación de salidas" class="my-3 d-flex justify-content-center">
+            <ul class="pagination pagination-sm mb-0">
+              <li class="page-item" id="liPaginaAnteriorSalidas">
+                <button class="page-link" id="btnPaginaAnteriorSalidas" onclick="anteriorPaginaSalidas()" tabindex="-1"
+                  aria-disabled="true">
+                  ⬅️ Anterior
+                </button>
+              </li>
+              <li class="page-item" id="liPaginaSiguienteSalidas">
+                <button class="page-link" id="btnPaginaSiguienteSalidas" onclick="siguientePaginaSalidas()">Siguiente
+                  ➡️</button>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      </div>
+      <!-- salidas--------------------- -->
+
+      <!-- MODAL EDITAR SALIDA -->
+      <div class="modal fade" id="editSalidaModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+              <h5 class="modal-title">Editar Salida</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formEditSalida" class="needs-validation" novalidate>
+              <div class="modal-body">
+                <input type="hidden" id="editSalidaId">
+                <div class="mb-3">
+                  <label class="form-label">Fecha y Hora</label>
+                  <input type="text" id="editSalidaFecha" class="form-control" readonly>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Producto</label>
+                  <input type="text" id="editSalidaProducto" class="form-control" value="POLLO BENEFICIADO" readonly>
+                </div>
+                <div class="row g-3">
+                  <div class="col-md-3">
+                    <label class="form-label">CANTIDAD DE TINAS</label>
+                    <select id="editSalidaTinas" class="form-select" required>
+                      <option disabled>Seleccione</option>
+                      <option>1</option>
+                      <option>2</option>
+                      <option>3</option>
+                      <option>4</option>
+                      <option>5</option>
+                      <option>6</option>
+                    </select>
+                    <div class="invalid-feedback">Por favor seleccione una cantidad.</div>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">POLLOS X TINA</label>
+                    <select id="editSalidaPollosPorTina" class="form-select" required>
+                      <option disabled>Seleccione</option>
+                      <option>2</option>
+                      <option>4</option>
+                      <option>5</option>
+                      <option>6</option>
+                      <option>7</option>
+                      <option>8</option>
+                      <option>9</option>
+                      <option>10</option>
+                    </select>
+                    <div class="invalid-feedback">Por favor seleccione una cantidad.</div>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">PESO X TINA (kg)</label>
+                    <input type="number" id="editSalidaPesoTina" class="form-control" step="0.01" min="0.01" required>
+                    <div class="invalid-feedback">Por favor ingrese un peso válido.</div>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">PESO BRUTO (kg)</label>
+                    <input type="number" id="editSalidaPesoBruto" class="form-control" step="0.01" min="0.01" required>
+                    <div class="invalid-feedback">Por favor ingrese un peso válido.</div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">DESTINO / SEDE</label>
+                    <select id="editSalidaDestino" class="form-select" required>
+                      <option disabled>Seleccione</option>
+                      <option>MARIANO MELGAR</option>
+                      <option>PAUCARPATA</option>
+                      <option>MIRAFLORES</option>
+                      <option>SOCABAYA</option>
+                      <option>CAYMA</option>
+                      <option>ALTO SELVA ALEGRE</option>
+                      <option>AVELINO (PRINCIPAL)</option>
+                      <option>COLON</option>
+                      <option value="OTRO">OTROS</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6 d-none" id="editOtroDestinoDiv">
+                    <label class="form-label">OTRO DESTINO</label>
+                    <input type="text" id="editOtroDestino" class="form-control">
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-warning">Guardar Cambios</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL CONFIRMAR ELIMINAR SALIDA -->
+      <div class="modal fade" id="confirmEliminarSalidaModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content p-4">
+            <h5 class="modal-title mb-3 text-danger">Confirmar Eliminación</h5>
+            <p>¿Está seguro de eliminar esta salida?</p>
+            <p><strong>ID:</strong> <span id="confirmSalidaId"></span></p>
+            <p><strong>Tienda:</strong> <span id="confirmSalidaTienda"></span></p>
+            <p><strong>Total Pollos:</strong> <span id="confirmSalidaPollos"></span></p>
+            <p><strong>Peso Neto:</strong> <span id="confirmSalidaPeso"></span> KG</p>
+            <p class="text-danger"><small>Este cambio no se puede deshacer.</small></p>
+            <div class="text-end">
+              <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancelar</button>
+              <button type="button" class="btn btn-danger" id="btnConfirmEliminarSalida">Eliminar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- TAB ELIMINADOS -->
+      <div class="tab-pane fade" id="eliminados">
+        <div class="card p-4">
+          <h5 class="text-danger mb-3">Productos Eliminados</h5>
+          <div class="table-responsive">
+            <table class="table table-bordered text-center align-middle">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Fecha Eliminación</th>
+                  <th>Producto</th>
+                  <th>Jabas</th>
+                  <th>Kg/Jaba</th>
+                  <th>Total Jabas</th>
+                  <th>Pollos/Jaba</th>
+                  <th>Total Pollos</th>
+                  <th>Bruto</th>
+                  <th>Neto</th>
+                  <th>Promedio</th>
+                </tr>
+              </thead>
+              <tbody id="tablaEliminados"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <!-- eliminados-->
+
+      <!-- reporte de tiendas -->
+      <div class="tab-pane fade" id="reporteTiendas">
+        <div class="card p-4 mb-4">
+          <h4 class="text-success mb-3">REPORTE POR TIENDA 🏪</h4>
+
+          <!--! <div class="row mb-3">
+    <div class="col-md-4">
+        <label class="form-label">FECHA INICIO</label>
+        <input type="date" id="reporteFechaInicio" class="form-control">
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">FECHA FIN</label>
+        <input type="date" id="reporteFechaFin" class="form-control">
+    </div>
+</div> !-->
+          <!-- FORMULARIO -->
+          <form id="formReporteTiendas" class="row g-3 needs-validation" novalidate>
+
+            <div class="col-md-4">
+              <label class="form-label">FECHA</label>
+              <input type="date" id="reporteFecha" class="form-control" required>
+              <div class="invalid-feedback">Seleccione una fecha.</div>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">TIENDA / SEDE</label>
+              <select id="reporteTienda" class="form-select">
+                <option value="">TODAS</option>
+                <option>MARIANO MELGAR</option>
+                <option>PAUCARPATA</option>
+                <option>MIRAFLORES</option>
+                <option>SOCABAYA</option>
+                <option>CAYMA</option>
+                <option>ALTO SELVA ALEGRE</option>
+                <option>AVELINO (PRINCIPAL)</option>
+                <option>COLON</option>
+              </select>
+            </div>
+
+            <!-- ESPACIO CONTROLADO (NO SE SALE) -->
+            <div class="col-md-4 d-flex align-items-end">
+              <button type="submit" class="btn btn-success btn-lg w-100">
+                GENERAR REPORTE
+              </button>
+            </div>
+
+          </form>
+        </div>
+
+        <!-- TABLA -->
+        <div class="card p-4">
+
+          <!-- Reemplazar el botón existente por este -->
+          <div class="d-flex justify-content-end gap-2 mb-3">
+            <button id="btnExportarReporteExcel" class="btn btn-success btn-sm">
+              <span>📊 Exportar a Excel</span>
+            </button>
+            <button onclick="exportarReporteTiendasCSV()" class="btn btn-secondary btn-sm">
+              <span>📄 Exportar a CSV</span>
+            </button>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover text-center align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>TIENDA</th>
+                  <th>TOTAL POLLOS</th>
+                  <th>PESO TOTAL (KG)</th>
+                </tr>
+              </thead>
+              <tbody id="tablaReporteTiendas">
+                <tr>
+                  <td colspan="3" class="text-muted">
+                    Seleccione una fecha y genere el reporte
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+      <!-- reporte de tiendas -->
+
+      <!-- TAB DASHBOARD -->
+<!-- TAB DASHBOARD MEJORADO -->
+<div class="tab-pane fade" id="dashboard">
+  <div class="card p-4 mb-4">
+    <h4 class="text-info mb-4">📊 Dashboard de Inventario</h4>
+
+    <!-- Filtros de Fecha -->
+    <div class="row mb-4">
+      <div class="col-md-4">
+        <label class="form-label">📅 Período</label>
+        <select id="dashboardPeriodo" class="form-select" onchange="actualizarDashboard()">
+          <option value="hoy">Hoy</option>
+          <option value="ayer">Ayer</option>
+          <option value="semana">Esta Semana</option>
+          <option value="mes" selected>Este Mes</option>
+          <option value="trimestre">Este Trimestre</option>
+          <option value="personalizado">Personalizado</option>
+        </select>
+      </div>
+      <div class="col-md-8 d-none" id="rangoFechasDiv">
+        <div class="row">
+          <div class="col-md-6">
+            <label class="form-label">Desde</label>
+            <input type="date" id="dashboardFechaInicio" class="form-control">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Hasta</label>
+            <input type="date" id="dashboardFechaFin" class="form-control">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPIs PRINCIPALES -->
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <div class="card text-center border-primary shadow-sm">
+          <div class="card-body">
+            <h6 class="card-title text-muted">🐓 POLLOS EN STOCK</h6>
+            <h3 id="totalPollos" class="text-primary">0</h3>
+            <small id="variacionPollos" class="text-success">+0%</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card text-center border-success shadow-sm">
+          <div class="card-body">
+            <h6 class="card-title text-muted">⚖️ PESO TOTAL</h6>
+            <h3 id="totalPeso" class="text-success">0 KG</h3>
+            <small id="variacionPeso" class="text-success">+0%</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card text-center border-warning shadow-sm">
+          <div class="card-body">
+            <h6 class="card-title text-muted">📤 INGRESOS HOY</h6>
+            <h3 id="ingresosHoy" class="text-warning">0</h3>
+            <small id="variacionIngresos" class="text-success">+0%</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card text-center border-danger shadow-sm">
+          <div class="card-body">
+            <h6 class="card-title text-muted">📤 SALIDAS HOY</h6>
+            <h3 id="salidasHoy" class="text-danger">0</h3>
+            <small id="variacionSalidas" class="text-success">+0%</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GRÁFICOS PRINCIPALES -->
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <div class="card shadow-sm">
+          <div class="card-header bg-light">
+            <h6 class="mb-0">📈 TENDENCIA DE STOCK (ÚLTIMOS 7 DÍAS)</h6>
+          </div>
+          <div class="card-body">
+            <canvas id="stockChart" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card shadow-sm">
+          <div class="card-header bg-light">
+            <h6 class="mb-0">📊 DISTRIBUCIÓN POR TIENDA</h6>
+          </div>
+          <div class="card-body">
+            <canvas id="tiendasChart" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GRÁFICOS SECUNDARIOS -->
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card shadow-sm">
+          <div class="card-header bg-light">
+            <h6 class="mb-0">📅 MOVIMIENTOS DIARIOS</h6>
+          </div>
+          <div class="card-body">
+            <canvas id="movimientosChart" height="180"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card shadow-sm">
+          <div class="card-header bg-light">
+            <h6 class="mb-0">⚖️ PESO PROMEDIO</h6>
+          </div>
+          <div class="card-body">
+            <canvas id="pesoChart" height="180"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLA RESUMEN -->
+  <div class="card p-4">
+    <h5 class="text-secondary mb-3">📋 RESUMEN DETALLADO</h5>
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover">
+        <thead class="table-light">
+          <tr>
+            <th>TIENDA</th>
+            <th>POLLOS ENVIADOS</th>
+            <th>PESO TOTAL (KG)</th>
+            <th>PROMEDIO</th>
+            <th>ÚLTIMO ENVÍO</th>
+          </tr>
+        </thead>
+        <tbody id="tablaResumenDashboard">
+          <tr>
+            <td colspan="5" class="text-center">Cargando datos...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+      <!-- dashboard -->
+
+      <!-- TAB TIENDAS -->
+      <!-- Contenido de la pestaña -->
+      <div class="tab-pane fade" id="tiendas">
+        <div class="card p-4">
+          <h4 class="mb-3">Gestión de Tiendas</h4>
+
+          <!-- Formulario para agregar tienda -->
+          <form id="formTienda" class="row g-3 mb-4">
+            <div class="col-md-6">
+              <input type="text" class="form-control" placeholder="Nombre de la tienda" required>
+            </div>
+            <div class="col-md-4">
+              <input type="text" class="form-control" placeholder="Dirección">
+            </div>
+            <div class="col-md-2">
+              <button type="submit" class="btn btn-primary w-100">Agregar</button>
+            </div>
+          </form>
+
+          <!-- Lista de tiendas -->
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Dirección</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tablaTiendas"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- MODAL EDITAR -->
+  <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-warning text-dark">
+          <h5 class="modal-title">Editar Registro</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form id="formEdit" class="needs-validation" novalidate>
+          <div class="modal-body">
+            <input type="hidden" id="editId">
+            <div class="mb-3">
+              <label class="form-label">Fecha y Hora</label>
+              <input type="text" id="editFecha" class="form-control" readonly>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Producto</label>
+              <input type="text" id="editProducto" class="form-control" value="POLLO VIVO" readonly>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label">CANTIDAD DE JABAS</label>
+                <select id="editCantidadJabas" class="form-select" required>
+                  <option disabled>Seleccione</option>
+                  <option>1</option>
+                  <option>2</option>
+                  <option>3</option>
+                  <option>4</option>
+                  <option>5</option>
+                  <option>6</option>
+                </select>
+                <div class="invalid-feedback">Por favor ingrese una cantidad válida.</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">POLLOS X JABA</label>
+                <select id="editPollosPorJaba" class="form-select" required>
+                  <option disabled>Seleccione</option>
+                  <option>6</option>
+                  <option>7</option>
+                  <option>8</option>
+                  <option>9</option>
+                </select>
+                <div class="invalid-feedback">Por favor ingrese un número válido.</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">PESO BRUTO (kg)</label>
+                <input type="number" id="editPesoBruto" class="form-control" step="0.01" min="0.01" required>
+                <div class="invalid-feedback">Por favor ingrese un peso válido.</div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-warning">Guardar Cambios</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer style="text-align: center; padding: 15px; font-size: 14px; color: #666;">
+    © <span id="añoActual"></span> <strong>SedyGames</strong>. Todos los derechos reservados.
+    · <a href="terminos.html">Términos de Uso</a>
+  </footer>
+
+  <script>
+    // Actualiza el año automáticamente
+    document.getElementById("añoActual").textContent = new Date().getFullYear();
+  </script>
+
+  <!-- SCRIPTS -->
+  <!-- EXCEL JS -->
+  <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="assets/firebase-config.js"></script>
+
+
+  <!-- Orden CORRECTO -->
+<!-- Archivos JavaScript modulares -->
+<script src="js/config.js"></script>
+<script src="js/utilitarios.js"></script>
+<script src="js/firestore.js"></script>
+<script src="js/table.js"></script>
+<script src="js/modal.js"></script>
+<script src="js/form.js"></script>
+<script src="js/modal-salida.js"></script>
+<script src="js/pagination.js"></script>
+<script src="js/pagination-salidas.js"></script>
+<script src="js/exportaciones.js"></script>
+<script src="js/reporte-tiendas.js"></script>
+<!-- NUEVO: Dashboard mejorado -->
+<script src="js/dashboard.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/inicializacion.js"></script>
+<script src="js/main.js"></script>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
